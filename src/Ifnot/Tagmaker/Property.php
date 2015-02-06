@@ -115,4 +115,12 @@ class Property {
 	{
 		return $this->render();
 	}
+
+	/**
+	 * @return string
+	 */
+	public function toString()
+	{
+		return $this->__toString();
+	}
 }
