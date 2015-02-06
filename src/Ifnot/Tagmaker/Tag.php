@@ -14,6 +14,8 @@ class Tag {
 
 	const NORMAL = 0;
 	const SELF_CLOSING = 1;
+	const START_TAG = 2;
+	const END_TAG = 3;
 
 	/**
 	 * @param string $name
@@ -93,25 +95,70 @@ class Tag {
 	}
 
 	/**
+	 * @param null $value
 	 * @param null $mode
 	 *
 	 * @return string
 	 */
-	public function render($mode = null)
+	public function render($value = null, $mode = null)
 	{
+		if(!is_null($value))
+			$this->value = $value;
+
 		if(!is_null($mode))
 			$this->mode = $mode;
 
-		$html = '<' . $this->name;
+		switch($mode) {
+			case self::NORMAL; return $this->renderStartTag() . $this->value . $this->renderEndTag(); break;
+			case self::SELF_CLOSING; return $this->renderSelfClosing(true); break;
+			case self::START_TAG; return $this->renderStartTag(); break;
+			case self::END_TAG; return $this->renderEndTag(); break;
+			default: return ""; break;
+		}
+	}
 
-		foreach($this->properties as $property) {
+	/**
+	 * @return string
+	 */
+	protected function renderStartTag()
+	{
+		$properties = $this->properties;
+
+		$html = '<' . $this->name;
+		foreach($properties as $property) {
+			$html .= ' ' . $property->render();
+		}
+		$html .= '>';
+
+		return $html;
+	}
+
+	/**
+	 * @return string
+	 */
+	protected function renderEndTag()
+	{
+		return '</' . $this->name . '>';
+	}
+
+	/**
+	 * @param bool $bindValueToAttribute
+	 *
+	 * @return string
+	 */
+	protected function renderSelfClosing($bindValueToAttribute = false)
+	{
+		$properties = $this->properties;
+
+		if($bindValueToAttribute)
+			$properties['value'] = new Property('value', $this->value);
+
+		$html = '<' . $this->name;
+		foreach($properties as $property) {
 			$html .= ' ' . $property->render();
 		}
 
-		if($this->mode == self::NORMAL)
-			$html .= '>' . $this->value . '</' . $this->name . '>';
-		else
-			$html .= ' />';
+		$html .= ' />';
 
 		return $html;
 	}
@@ -122,5 +169,13 @@ class Tag {
 	public function __toString()
 	{
 		return $this->render();
+	}
+
+	/**
+	 * @return string
+	 */
+	public function toString()
+	{
+		return $this->__toString();
 	}
 }
